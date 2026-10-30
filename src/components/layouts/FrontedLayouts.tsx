@@ -1,6 +1,8 @@
 import React from 'react'
 import Navbar from '../navbar/Navbar'
 import Footer from '../ui/Footer'
+import RegisterModal from '../modal/RegisterModal'
+import LoginModal from '../modal/LoginModal'
 
 const FrontedLayouts = ({children}:{children:React.ReactNode}) => {
   return (
@@ -10,6 +12,8 @@ const FrontedLayouts = ({children}:{children:React.ReactNode}) => {
             {children}
         </div>
         <Footer/>
+        <RegisterModal/>
+        <LoginModal/>
     </>
   )
 }

@@ -6,11 +6,22 @@ import { FiPackage } from "react-icons/fi"
 import { IoCartOutline } from "react-icons/io5"
 import Avatar from "./Avatar"
 import { useState } from "react"
+import CartSidebar from "./CartSidebar"
+import GroceryAssistant from "./GroceryAssistant"
+import { LuSparkles } from "react-icons/lu"
+import { useAuthModal } from "@/store/authModalStore"
 
 const Navbar = () => {
     const [open, setOpen] = useState(false);
+    const [cartOpen, setCartOpen] = useState(false);
+    const [isAIOpen, setIsAIOpen] = useState(false);
+    const {openLogin} = useAuthModal();
   return (
     <>
+    <button className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-medium text-white shadow-lg transition hover:bg-primary-hover" type="button" onClick={() => setIsAIOpen(true)}>
+        <LuSparkles size={18} />
+        <span>Ask AI</span>
+    </button>
        <nav className="relative z-40 flex items-center justify-between
                         border-b border-border bg-white px-6
                         py-4 transition-all md:px-16 lg:px-24 xl:px-32">
@@ -38,7 +49,7 @@ const Navbar = () => {
 
                 </div>
                 {/* cart */}
-                <button type="button" className="relative cursor-pointer" >
+                <button onClick={() => setCartOpen(true)} type="button" className="relative cursor-pointer" >
                     <IoCartOutline className="text-muted transition hover:text-primary" />
                     <span className="absolute -right-3 -top-2 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-primary text-[10px] text-white">
                         5
@@ -48,7 +59,7 @@ const Navbar = () => {
                 </button>
                 {/* login  */}
 
-                <div className="flex items-center gap-2">
+                <div onClick={openLogin} className="flex items-center gap-2">
                     <button className="cursor-pointer rounded-full bg-primary px-6 py-2 text-sm text-white transition hover:bg-primary-hover">
                         Login
                     </button>
@@ -84,7 +95,7 @@ const Navbar = () => {
                     </div>
                     <span>Cart</span>
                 </button>
-                <div className="flex items-center gap-2">
+                <div onClick={openLogin} className="flex items-center gap-2">
                     <button className="cursor-pointer rounded-full bg-primary px-6 py-2 text-sm text-white transition hover:bg-primary-hover">
                         Login
                     </button>
@@ -93,7 +104,9 @@ const Navbar = () => {
 
             </div>
        </nav>
-        
+        {/* cartsidebar  */}
+        <CartSidebar onClose={() => setCartOpen(false) } open={cartOpen}/>
+        <GroceryAssistant onClose = {() => setIsAIOpen(false)} open={isAIOpen}/>
     </>
   )
 }
