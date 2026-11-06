@@ -3,19 +3,46 @@ import { useAuthModal } from "@/store/authModalStore";
 import { useState } from "react";
 import Modal from "./Modal";
 import { FiLock, FiMail, FiUser } from "react-icons/fi";
+import toast from "react-hot-toast";
+import { authClient } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
 export default function LoginModal() {
   const { isLoginOpen,openRegister,closeLogin } = useAuthModal();
-
+  const router = useRouter()
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const handleSubmit = (e: React.SubmitEvent) => {
+  const [loading, setLoading] = useState(false);
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log({
-      
-      email,
-      password,
-    });
+    if(!email.trim() || !password.trim()){
+      return toast.error("All fields are required!")
+    }
+
+    if(password.length < 6){
+      return toast.error("Password must be at least 6 characters!")
+    }
+    setLoading(true);
+    try {
+      const {error} = await authClient.signIn.email({
+        email:email.trim(),
+        password
+      });
+      if(error){
+        toast.error(error.message || "Login Failed!");
+        return;
+      }
+      toast.success("Login successful!");
+      setEmail("");
+      setPassword("");
+      closeLogin();
+      router.refresh();
+    } catch (error) {
+      console.error(error);
+      toast.error("Something went wrong. Please try again.");
+    } finally{
+      setLoading(false);
+    }
   };
   const handleRegister = () => {
     closeLogin();
@@ -72,14 +99,14 @@ export default function LoginModal() {
             </label>
             <div className="relative">
             <FiLock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
-            <input type="text" id="register-email" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Create a password" required minLength={6} className="border w-full rounded-lg bg-white border-border py-3 pl-10 pr-4 text-sm text-text outline-none transition placeholder:text-muted focus:border-primary focus:ring-2 focus:ring-primary/20"/>
+            <input type="text" id="register-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Create a password" required minLength={6} className="border w-full rounded-lg bg-white border-border py-3 pl-10 pr-4 text-sm text-text outline-none transition placeholder:text-muted focus:border-primary focus:ring-2 focus:ring-primary/20"/>
 
             </div>
           </div>
 
-          {/* Register button  */}
+          {/* Login button  */}
           <button type="submit" className="w-full cursor-pointer rounded-lg bg-primary py-3 font-medium text-white transition hover:bg-primary-hover">
-            Login
+            {loading ? "Logging in..." : "Login"}
           </button>
           <p className="mt-6 text-center text-sm text-muted">
             Don&apos;t have an account?{" "}
