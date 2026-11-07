@@ -1,22 +1,17 @@
 
 "use client";
 
+import { categories } from "@/constants/categories";
 import Image from "next/image";
 import { ChangeEvent, useState } from "react";
+import toast from "react-hot-toast";
 import { FiImage, FiTrash2, FiUploadCloud } from "react-icons/fi";
 
-const categories = [
-  "Fresh Fruits",
-  "Vegetables",
-  "Baked Foods",
-  "Cereals",
-  "Dairy Products",
-  "Drinks",
-  "Instant Foods",
-];
+
 
 export default function AddProduct() {
-  const [images, setImages] = useState<string[]>([]);
+  const [images, setImages] = useState<File[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -26,11 +21,9 @@ export default function AddProduct() {
     const remainingSlots = 4 - images.length;
     const selectedFiles = files.slice(0, remainingSlots);
 
-    const newImages = selectedFiles.map((file) =>
-      URL.createObjectURL(file)
-    );
+    setImages((prev) => [...prev, ...selectedFiles])
 
-    setImages((prev) => [...prev, ...newImages]);
+    
 
     e.target.value = "";
   };
@@ -39,12 +32,43 @@ export default function AddProduct() {
     setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
+  const handleSubmit = async(e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    const form = e.currentTarget;
+
     if (images.length === 0) {
-      alert("Please upload at least one product image.");
+      toast.error("Please upload at least one product image.");
       return;
+    }
+
+    setLoading(true);
+
+    try {
+      const formData = new FormData(form);
+      images.forEach((image) => {
+        formData.append("images", image);
+
+      })
+      const response = await fetch("/api/products",{
+        method:"POST",
+        body:formData
+      });
+      const data = await response.json();
+      if(!response.ok){
+        toast.error(data.message || "Failed to create product.");
+        return;
+      }
+      toast.success("Product created successfully.");
+
+      form.reset();
+      setImages([]);
+    } catch (error) {
+      console.error("CREATE_PRODUCT_ERROR:",error)
+      toast.error("Something went wrong. Please try again.");
+      
+    }finally{
+      setLoading(false);
     }
 
     // Add product logic here
@@ -75,6 +99,7 @@ export default function AddProduct() {
             </label>
 
             <input
+            name="name"
               type="text"
               placeholder="e.g. Instant Chicken Noodles"
               className="w-full rounded-lg border border-border bg-white px-4 py-3 text-sm outline-none transition focus:border-primary"
@@ -88,6 +113,7 @@ export default function AddProduct() {
             </label>
 
             <select
+            name="category"
               defaultValue=""
               className="w-full rounded-lg border border-border bg-white px-4 py-3 text-sm outline-none transition focus:border-primary"
             >
@@ -96,8 +122,8 @@ export default function AddProduct() {
               </option>
 
               {categories.map((category) => (
-                <option key={category} value={category}>
-                  {category}
+                <option key={category.value} value={category.value}>
+                  {category.label}
                 </option>
               ))}
             </select>
@@ -110,6 +136,7 @@ export default function AddProduct() {
             </label>
 
             <input
+            name="unit"
               type="text"
               placeholder="e.g. 1 kg, 500 g, 1 L"
               className="w-full rounded-lg border border-border bg-white px-4 py-3 text-sm outline-none transition focus:border-primary"
@@ -123,6 +150,7 @@ export default function AddProduct() {
             </label>
 
             <input
+            name="stock"
               type="number"
               min="0"
               step="1"
@@ -147,9 +175,8 @@ export default function AddProduct() {
               </span>
 
               <input
-                type="number"
-                min="0"
-                step="0.01"
+              name="price"
+                type="text"
                 placeholder="0.00"
                 className="w-full bg-white px-3 py-3 text-sm outline-none"
               />
@@ -168,9 +195,8 @@ export default function AddProduct() {
               </span>
 
               <input
-                type="number"
-                min="0"
-                step="0.01"
+              name="oldPrice"
+                type="text"
                 placeholder="0.00"
                 className="w-full bg-white px-3 py-3 text-sm outline-none"
               />
@@ -184,6 +210,7 @@ export default function AddProduct() {
             </label>
 
             <textarea
+            name="description"
               rows={5}
               placeholder="Enter a short description about the product..."
               className="w-full resize-none rounded-lg border border-border bg-white px-4 py-3 text-sm outline-none transition focus:border-primary"
@@ -213,11 +240,11 @@ export default function AddProduct() {
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               {images.map((image, index) => (
                 <div
-                  key={image}
+                  key={index}
                   className="group relative aspect-square overflow-hidden rounded-xl border border-border bg-background"
                 >
                   <Image
-                    src={image}
+                    src={URL.createObjectURL(image)}
                     alt={`Product image ${index + 1}`}
                     fill
                     className="object-contain p-2"
@@ -284,9 +311,10 @@ export default function AddProduct() {
 
           <button
             type="submit"
+            disabled={loading}
             className="rounded-lg bg-primary px-6 py-3 text-sm font-medium text-white transition hover:bg-primary-hover"
           >
-            Add Product
+            {loading ? "Adding Product..." : "Add Product"}
           </button>
         </div>
       </form>
