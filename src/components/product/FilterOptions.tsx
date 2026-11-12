@@ -1,10 +1,42 @@
 "use client"
 
+import { categories } from "@/constants/categories";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { RiArrowRightDoubleFill } from "react-icons/ri";
 
+
+const priceRanges = [
+   {label: "$0-$10", value: "0-10"},
+   {label: "$10-$25", value: "10-25"},
+   {label: "$25-50", value: "25-50"},
+   {label: "$50+", value: "50+"},
+] as const;
+
 const FilterOptions = () => {
     const [showFilter, setShowFilter] = useState(false);
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+    const handleFilterChange = (type: "categories" | "priceRanges", value: string) => {
+        const params = new URLSearchParams(searchParams.toString());
+
+        const currentValues = params.getAll(type);
+
+        params.delete(type);
+        if(!currentValues.includes(value)){
+            currentValues.push(value);
+        }else{
+            currentValues.splice(currentValues.indexOf(value),1)
+        }
+        currentValues.forEach((item) => {
+            params.append(type, item);
+        })
+        router.push(`${pathname}?${params.toString()}`)
+    }
+    const isChecked = (type: "categories" | "priceRanges", value: string) => {
+        return searchParams.getAll(type).includes(value);
+    }
   return (
     <aside className="w-full sm:min-w-60 sm:max-w-60">
         {/* filter toggle button  */}
@@ -19,22 +51,13 @@ const FilterOptions = () => {
                     CATEGORIES
                 </h3>
                 <div className="space-y-3 text-sm text-muted">
-                    <label className="flex cursor-pointer items-center gap-3">
-                        <input type="checkbox" className="text-text" />
-                        <span>Fresh Fruits</span>
-                    </label>
-                    <label className="flex cursor-pointer items-center gap-3">
-                        <input type="checkbox" className="text-text" />
-                        <span>Vegetables</span>
-                    </label>
-                    <label className="flex cursor-pointer items-center gap-3">
-                        <input type="checkbox" className="text-text" />
-                        <span>Cereals</span>
-                    </label>
-                    <label className="flex cursor-pointer items-center gap-3">
-                        <input type="checkbox" className="text-text" />
-                        <span>Baked Foods</span>
-                    </label>
+                    {categories.map((category) => (
+                        <label key={category.value} className="flex cursor-pointer items-center gap-3">
+                            <input checked={isChecked("categories", category.value)} onChange={() => handleFilterChange("categories", category.value)} type="checkbox" value={"Instant Foods"} className="accent-primary" />
+                            <span>{category.label}</span>
+                        </label>
+                    ))}
+                    
                 </div>
             </div>
             <div className="rounded-xl border border-border bg-card p-5">
@@ -42,22 +65,13 @@ const FilterOptions = () => {
                     PRICE RANGE
                 </h3>
                 <div className="space-y-3 text-sm text-muted">
-                    <label className="flex cursor-pointer items-center gap-3">
-                        <input value="0-10" type="checkbox" className="text-text" />
-                        <span>$0-$10</span>
+                    {priceRanges.map((range) => (
+                        <label key={range.value} className="flex cursor-pointer items-center gap-3">
+                        <input checked={isChecked("priceRanges", range.value)} onChange={() => handleFilterChange("priceRanges", range.value)}value="50+"type="checkbox" className="text-text" />
+                        <span>{range.label}</span>
                     </label>
-                    <label className="flex cursor-pointer items-center gap-3">
-                        <input value="10-25"type="checkbox" className="text-text" />
-                        <span>$10-$25</span>
-                    </label>
-                    <label className="flex cursor-pointer items-center gap-3">
-                        <input value="25-50" type="checkbox" className="text-text" />
-                        <span>$25-$50</span>
-                    </label>
-                    <label className="flex cursor-pointer items-center gap-3">
-                        <input value="50+"type="checkbox" className="text-text" />
-                        <span>$50+</span>
-                    </label>
+                    ))}
+                    
                 </div>
             </div>
         </div>

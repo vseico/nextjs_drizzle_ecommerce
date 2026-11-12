@@ -3,14 +3,15 @@ import Link from "next/link";
 import { IoCartOutline } from "react-icons/io5";
 
 interface ProductCardType{
-    id:number;
+    id: string;
     name: string;
-    price: number;
-    oldPrice: number;
-    image: string;
-    unit: number | string;
-    slug: string;
     category: string;
+    price: string;
+    oldPrice: string | null;
+    unit: string;
+    slug: string;
+    image: string | null;
+
 }
 interface ProductCardProps{
     product:ProductCardType
@@ -20,7 +21,7 @@ const ProductCard = ({product}:ProductCardProps) => {
   return (
     <div className="border border-gray-500/20 rounded-md md:px-4 px-3 py--2 bg-white w-full">
         <Link href={`/products/${product.slug}`}>
-            <Image className="group-hover:scale-105 transition w-40 h-40 object-contain" src={product.image} alt={product.name} width={400} height={400}>
+            <Image className="group-hover:scale-105 transition w-40 h-40 object-contain" src={product.image || ""} alt={product.name} width={400} height={400}>
 
             </Image>
 
