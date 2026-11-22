@@ -1,6 +1,5 @@
 import { db } from "@/db/db";
 import { product } from "@/db/schema";
-import { success } from "better-auth";
 import { desc } from "drizzle-orm";
 
 export async function getNewArrivals(){
@@ -21,6 +20,7 @@ export async function getNewArrivals(){
             oldPrice: product.oldPrice,
             unit: product.unit,
             slug: product.slug,
+            stock: product.stock,
             image:product.images.find((image) => image.isMain)?.imageUrl ?? null
         }))
         return {

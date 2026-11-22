@@ -1,3 +1,4 @@
+import Link from "next/link";
 
 import {
   FaFacebookF,
@@ -12,7 +13,7 @@ import {
 
 const quickLinks = [
   { label: "Home", href: "/" },
-  { label: "Shop", href: "/shop" },
+  { label: "Shop", href: "/products" },
   { label: "About Us", href: "/about" },
   { label: "Contact Us", href: "/contact" },
   { label: "My Orders", href: "/orders" },
@@ -34,7 +35,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 gap-10 pb-12 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
           {/* Brand */}
           <div>
-            <a
+            <Link
               href="/"
               className="mb-4 inline-flex items-center gap-2"
             >
@@ -45,7 +46,7 @@ export default function Footer() {
               <span className="text-xl font-bold tracking-tight text-gray-950">
                 Grocery<span className="text-emerald-500">Cart</span>
               </span>
-            </a>
+            </Link>
 
             <p className="mb-6 max-w-[240px] text-sm leading-6 text-gray-500">
               Fresh groceries and everyday essentials delivered
@@ -173,7 +174,7 @@ export default function Footer() {
         {/* Bottom footer */}
         <div className="flex flex-col gap-3 border-t border-gray-200 py-6 text-sm text-gray-500 sm:flex-row sm:items-center sm:justify-between">
           <p>
-            © {new Date().getFullYear()} GroceryCart. All rights reserved.
+            Â© {new Date().getFullYear()} GroceryCart. All rights reserved.
           </p>
 
           <p>

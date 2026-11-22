@@ -2,7 +2,9 @@
 import { useAuthModal } from "@/store/authModalStore";
 import { useState } from "react";
 import Modal from "./Modal";
-import { FiLock, FiMail, FiUser } from "react-icons/fi";
+import { FiMail, FiUser } from "react-icons/fi";
+import PasswordInput from "./PasswordInput";
+import GoogleButton from "./GoogleButton";
 import toast from "react-hot-toast";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
@@ -61,12 +63,13 @@ export default function LoginModal() {
           </h2>
           <p className="mt-2 text-sm text-muted">Login to continue shopping with GroceryCart</p>
         </div>
+        <GoogleButton />
         <form onSubmit={handleSubmit} className="space-y-4">
-        
+
           {/* Email  */}
           <div>
             <label
-              htmlFor="register-email"
+              htmlFor="login-email"
               className="mb-2 block text-sm font-medium text-text"
             >
               Email Address
@@ -78,7 +81,8 @@ export default function LoginModal() {
               />
               <input
                 type="email"
-                id="register-email"
+                id="login-email"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
@@ -92,20 +96,22 @@ export default function LoginModal() {
           {/* password  */}
           <div>
             <label
-              htmlFor="register-password"
+              htmlFor="login-password"
               className="mb-2 block text-sm font-medium text-text"
             >
               Password
             </label>
-            <div className="relative">
-            <FiLock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
-            <input type="text" id="register-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Create a password" required minLength={6} className="border w-full rounded-lg bg-white border-border py-3 pl-10 pr-4 text-sm text-text outline-none transition placeholder:text-muted focus:border-primary focus:ring-2 focus:ring-primary/20"/>
-
-            </div>
+            <PasswordInput
+              id="login-password"
+              value={password}
+              onChange={setPassword}
+              placeholder="Enter your password"
+              autoComplete="current-password"
+            />
           </div>
 
           {/* Login button  */}
-          <button type="submit" className="w-full cursor-pointer rounded-lg bg-primary py-3 font-medium text-white transition hover:bg-primary-hover">
+          <button type="submit" disabled={loading} className="w-full cursor-pointer rounded-lg bg-primary py-3 font-medium text-white transition hover:bg-primary-hover disabled:opacity-60">
             {loading ? "Logging in..." : "Login"}
           </button>
           <p className="mt-6 text-center text-sm text-muted">

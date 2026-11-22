@@ -1,83 +1,34 @@
+import OrderStatusForm from "@/components/admin/OrderStatusForm";
+import {
+  orderStatusLabel,
+  orderStatusStyles,
+  paymentMethodLabel,
+  paymentStatusLabel,
+} from "@/lib/pricing";
+import { getAdminOrder } from "@/server-actions/admin/orders";
 import Image from "next/image";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import {
   FaArrowLeft,
-
+  FaBox,
   FaCheckCircle,
   FaClock,
   FaMapMarkerAlt,
+  FaTimesCircle,
 } from "react-icons/fa";
 
-const order = {
-  id: "ORD-1001",
-  customer: {
-    name: "John Doe",
-    email: "john@example.com",
-    phone: "+1 234 567 890",
-  },
+interface OrderPageProps {
+  params: Promise<{ orderId: string }>;
+}
 
-  address: {
-    firstName: "John",
-    lastName: "Doe",
-    street: "123 Main Street",
-    city: "New York",
-    state: "NY",
-    zipcode: "10001",
-    country: "USA",
-  },
+export default async function OrderPage({ params }: OrderPageProps) {
+  const { orderId } = await params;
+  const order = await getAdminOrder(orderId);
+  if (!order) notFound();
 
-  items: [
-    {
-      id: 1,
-      name: "Fresh Red Apples",
-      category: "Fresh Fruits",
-      image: "/images/product-2.png",
-      price: 4.99,
-      quantity: 2,
-      unit: "1 kg",
-    },
-    {
-      id: 2,
-      name: "Cheddar Cheese",
-      category: "Dairy Products",
-      image: "/images/product-15.png",
-      price: 7.99,
-      quantity: 1,
-      unit: "250 g",
-    },
-    {
-      id: 3,
-      name: "Instant Chicken Noodles",
-      category: "Instant Foods",
-      image: "/images/product-21.png",
-      price: 2.49,
-      quantity: 3,
-      unit: "5 Pack",
-    },
-  ],
-
-  paymentMethod: "Stripe",
-  paymentStatus: "Paid",
-  orderStatus: "Delivered",
-  orderDate: "Aug 31, 2026",
-  shippingFee: 0,
-};
-
-const statusStyles: Record<string, string> = {
-  Pending: "bg-yellow-100 text-yellow-700",
-  Processing: "bg-blue-100 text-blue-700",
-  Shipped: "bg-purple-100 text-purple-700",
-  Delivered: "bg-green-100 text-green-700",
-};
-
-export default function OrderPage() {
-  const subtotal = order.items.reduce(
-    (total, item) => total + item.price * item.quantity,
-    0
-  );
-
-  const tax = subtotal * 0.02;
-  const total = subtotal + tax + order.shippingFee;
+  const shippingFee = Number(order.shippingFee);
+  const paid = order.paymentStatus === "paid";
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -93,21 +44,21 @@ export default function OrderPage() {
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-text">
-              Order {order.id}
-            </h1>
-
+            <h1 className="text-2xl font-semibold text-text">Order {order.orderId}</h1>
             <p className="mt-1 text-sm text-muted">
-              Placed on {order.orderDate}
+              Placed on{" "}
+              {order.createdAt.toLocaleString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+              })}
             </p>
           </div>
 
-          <span
-            className={`w-fit rounded-full px-4 py-2 text-sm font-medium ${
-              statusStyles[order.orderStatus]
-            }`}
-          >
-            {order.orderStatus}
+          <span className={`w-fit rounded-full px-4 py-2 text-sm font-medium ${orderStatusStyles[order.orderStatus] ?? ""}`}>
+            {orderStatusLabel[order.orderStatus] ?? order.orderStatus}
           </span>
         </div>
       </div>
@@ -123,42 +74,37 @@ export default function OrderPage() {
 
             <div className="divide-y divide-border">
               {order.items.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex gap-4 p-5"
-                >
+                <div key={item.id} className="flex gap-4 p-5">
                   <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-background">
-                    <Image
-                    width={80}
-                    height={80}
-                      src={item.image}
-                      alt={item.name}
-                      className="h-full w-full object-contain"
-                    />
+                    {item.productImage ? (
+                      <Image
+                        width={80}
+                        height={80}
+                        src={item.productImage}
+                        alt={item.productName}
+                        className="h-full w-full object-contain"
+                      />
+                    ) : (
+                      <FaBox className="text-muted" />
+                    )}
                   </div>
 
                   <div className="flex min-w-0 flex-1 flex-col justify-center">
-                    <p className="truncate font-medium text-text">
-                      {item.name}
-                    </p>
-
+                    <p className="truncate font-medium text-text">{item.productName}</p>
                     <p className="mt-1 text-sm text-muted">
-                      {item.category}
+                      {item.unit ? `${item.unit} × ` : "Qty: "}
+                      {item.quantity}
                     </p>
-
-                    <p className="mt-1 text-sm text-muted">
-                      {item.unit} × {item.quantity}
-                    </p>
+                    {!item.productId && (
+                      <p className="mt-1 text-xs text-error">Product was deleted</p>
+                    )}
                   </div>
 
                   <div className="flex flex-col items-end justify-center">
                     <p className="font-medium text-text">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      ${(Number(item.price) * item.quantity).toFixed(2)}
                     </p>
-
-                    <p className="mt-1 text-xs text-muted">
-                      ${item.price.toFixed(2)} each
-                    </p>
+                    <p className="mt-1 text-xs text-muted">${Number(item.price).toFixed(2)} each</p>
                   </div>
                 </div>
               ))}
@@ -168,37 +114,21 @@ export default function OrderPage() {
           {/* Customer Information */}
           <div className="rounded-xl border border-border bg-card">
             <div className="border-b border-border px-5 py-4">
-              <h2 className="font-semibold text-text">
-                Customer Information
-              </h2>
+              <h2 className="font-semibold text-text">Customer Information</h2>
             </div>
 
             <div className="grid grid-cols-1 gap-5 p-5 sm:grid-cols-2">
               <div>
-                <p className="text-xs font-medium uppercase text-muted">
-                  Name
-                </p>
-                <p className="mt-1 text-sm font-medium text-text">
-                  {order.customer.name}
-                </p>
+                <p className="text-xs font-medium uppercase text-muted">Name</p>
+                <p className="mt-1 text-sm font-medium text-text">{order.user?.name}</p>
               </div>
-
               <div>
-                <p className="text-xs font-medium uppercase text-muted">
-                  Email
-                </p>
-                <p className="mt-1 break-all text-sm font-medium text-text">
-                  {order.customer.email}
-                </p>
+                <p className="text-xs font-medium uppercase text-muted">Email</p>
+                <p className="mt-1 break-all text-sm font-medium text-text">{order.user?.email}</p>
               </div>
-
               <div>
-                <p className="text-xs font-medium uppercase text-muted">
-                  Phone
-                </p>
-                <p className="mt-1 text-sm font-medium text-text">
-                  {order.customer.phone}
-                </p>
+                <p className="text-xs font-medium uppercase text-muted">Phone</p>
+                <p className="mt-1 text-sm font-medium text-text">{order.address?.phone ?? "—"}</p>
               </div>
             </div>
           </div>
@@ -207,28 +137,21 @@ export default function OrderPage() {
           <div className="rounded-xl border border-border bg-card">
             <div className="flex items-center gap-2 border-b border-border px-5 py-4">
               <FaMapMarkerAlt className="text-primary" />
-
-              <h2 className="font-semibold text-text">
-                Delivery Address
-              </h2>
+              <h2 className="font-semibold text-text">Delivery Address</h2>
             </div>
 
-            <div className="p-5 text-sm text-muted">
-              <p className="font-medium text-text">
-                {order.address.firstName} {order.address.lastName}
-              </p>
-
-              <p className="mt-1">
-                {order.address.street}
-              </p>
-
-              <p>
-                {order.address.city}, {order.address.state}{" "}
-                {order.address.zipcode}
-              </p>
-
-              <p>{order.address.country}</p>
-            </div>
+            {order.address && (
+              <div className="p-5 text-sm text-muted">
+                <p className="font-medium text-text">
+                  {order.address.firstName} {order.address.lastName}
+                </p>
+                <p className="mt-1">{order.address.street}</p>
+                <p>
+                  {order.address.city}, {order.address.state} {order.address.postalCode}
+                </p>
+                <p>{order.address.country}</p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -237,37 +160,28 @@ export default function OrderPage() {
           {/* Order Summary */}
           <div className="rounded-xl border border-border bg-card">
             <div className="border-b border-border px-5 py-4">
-              <h2 className="font-semibold text-text">
-                Order Summary
-              </h2>
+              <h2 className="font-semibold text-text">Order Summary</h2>
             </div>
 
             <div className="space-y-3 p-5 text-sm">
               <div className="flex justify-between text-muted">
                 <span>Subtotal</span>
-                <span>${subtotal.toFixed(2)}</span>
+                <span>${Number(order.subtotal).toFixed(2)}</span>
               </div>
-
               <div className="flex justify-between text-muted">
                 <span>Shipping</span>
-
-                <span className="font-medium text-success">
-                  {order.shippingFee === 0
-                    ? "Free"
-                    : `$${order.shippingFee.toFixed(2)}`}
+                <span className={shippingFee === 0 ? "font-medium text-success" : ""}>
+                  {shippingFee === 0 ? "Free" : `$${shippingFee.toFixed(2)}`}
                 </span>
               </div>
-
               <div className="flex justify-between text-muted">
                 <span>Tax (2%)</span>
-                <span>${tax.toFixed(2)}</span>
+                <span>${Number(order.tax).toFixed(2)}</span>
               </div>
-
               <div className="my-4 border-t border-border" />
-
               <div className="flex justify-between text-base font-semibold text-text">
                 <span>Total</span>
-                <span>${total.toFixed(2)}</span>
+                <span>${Number(order.totalAmount).toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -275,77 +189,68 @@ export default function OrderPage() {
           {/* Payment Information */}
           <div className="rounded-xl border border-border bg-card">
             <div className="border-b border-border px-5 py-4">
-              <h2 className="font-semibold text-text">
-                Payment Information
-              </h2>
+              <h2 className="font-semibold text-text">Payment Information</h2>
             </div>
 
             <div className="space-y-4 p-5 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted">
-                  Payment Method
-                </span>
-
+                <span className="text-muted">Payment Method</span>
                 <span className="font-medium text-text">
-                  {order.paymentMethod}
+                  {paymentMethodLabel[order.paymentMethod] ?? order.paymentMethod}
                 </span>
               </div>
-
               <div className="flex justify-between">
-                <span className="text-muted">
-                  Payment Status
-                </span>
-
-                <span className="flex items-center gap-1.5 font-medium text-success">
-                  <FaCheckCircle size={13} />
-                  {order.paymentStatus}
+                <span className="text-muted">Payment Status</span>
+                <span
+                  className={`flex items-center gap-1.5 font-medium ${
+                    paid ? "text-success" : order.paymentStatus === "failed" ? "text-error" : "text-accent"
+                  }`}
+                >
+                  {paid ? <FaCheckCircle size={13} /> : order.paymentStatus === "failed" ? <FaTimesCircle size={13} /> : <FaClock size={13} />}
+                  {paymentStatusLabel[order.paymentStatus] ?? order.paymentStatus}
                 </span>
               </div>
+              {order.stripePaymentIntentId && (
+                <div className="flex justify-between gap-3">
+                  <span className="text-muted">Stripe payment</span>
+                  <a
+                    href={`https://dashboard.stripe.com/payments/${order.stripePaymentIntentId}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="truncate font-medium text-primary hover:underline"
+                  >
+                    View in Stripe
+                  </a>
+                </div>
+              )}
+              {order.paymentMethod === "STRIPE" && !paid && (
+                <p className="rounded-lg bg-yellow-50 p-3 text-xs text-yellow-800">
+                  Not paid yet — do not ship this order until payment is received.
+                </p>
+              )}
             </div>
           </div>
 
           {/* Order Status */}
           <div className="rounded-xl border border-border bg-card">
             <div className="border-b border-border px-5 py-4">
-              <h2 className="font-semibold text-text">
-                Order Status
-              </h2>
+              <h2 className="font-semibold text-text">Order Status</h2>
             </div>
 
             <div className="p-5">
               <div className="flex items-center gap-3">
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#E8F7EF] text-primary">
-                  {order.orderStatus === "Delivered" ? (
-                    <FaCheckCircle size={16} />
-                  ) : (
-                    <FaClock size={16} />
-                  )}
+                  {order.orderStatus === "delivered" ? <FaCheckCircle size={16} /> : <FaClock size={16} />}
                 </div>
-
                 <div>
                   <p className="text-sm font-medium text-text">
-                    {order.orderStatus}
+                    {orderStatusLabel[order.orderStatus] ?? order.orderStatus}
                   </p>
-
-                  <p className="text-xs text-muted">
-                    Current order status
-                  </p>
+                  <p className="text-xs text-muted">Current order status</p>
                 </div>
               </div>
 
-              <select
-                defaultValue={order.orderStatus}
-                className="mt-5 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary"
-              >
-                <option>Pending</option>
-                <option>Processing</option>
-                <option>Shipped</option>
-                <option>Delivered</option>
-              </select>
-
-              <button className="mt-3 w-full rounded-lg bg-primary py-2.5 text-sm font-medium text-white transition hover:bg-primary-hover">
-                Update Status
-              </button>
+              <OrderStatusForm orderId={order.id} currentStatus={order.orderStatus} />
             </div>
           </div>
         </div>

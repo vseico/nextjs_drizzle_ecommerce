@@ -1,7 +1,15 @@
 import { relations } from "drizzle-orm";
-import { pgTable, serial, text, decimal, integer, timestamp, boolean } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  decimal,
+  integer,
+  timestamp,
+  boolean,
+  uniqueIndex,
+  index,
+} from "drizzle-orm/pg-core";
 import { user } from "./auth-schema";
-import { TiMessageTyping } from "react-icons/ti";
 
 export const product = pgTable("product", {
   id: text("id").primaryKey(),
@@ -12,47 +20,85 @@ export const product = pgTable("product", {
   description: text("description").notNull(),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   oldPrice: decimal("old_price", { precision: 10, scale: 2 }),
-  stock:integer("stock").notNull().default(0),
-  createdAt:timestamp("created_at").defaultNow().notNull()
+  stock: integer("stock").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const productImage = pgTable("product_image", {
-    id: text("id").primaryKey(),
-    productId:text("product_id").notNull().references(() => product.id, {
-        onDelete: "cascade",
+  id: text("id").primaryKey(),
+  productId: text("product_id")
+    .notNull()
+    .references(() => product.id, {
+      onDelete: "cascade",
     }),
-    imageUrl: text("image_url").notNull(),
-    publicId: text("public_id").notNull(),
-    isMain: boolean("is_main").default(false).notNull(),
-    createdAt:timestamp("created_at").defaultNow().notNull(),
-})
-// address model
-
-export const address = pgTable("address", {
-    id: text("id").primaryKey(),
-
-    userId: text("user_id").notNull().references(() => user.id, {
-        onDelete: "cascade"
-    }),
-
-    fitstName: text("first_name").notNull(),
-    lastName: text("last_name").notNull(),
-    phone: text("phone").notNull(),
-    street: text("street").notNull(),
-    city: text("city").notNull(),
-    state: text("state").notNull(),
-    country: text("country").notNull(),
-    isDefault: boolean("is_default").default(false).notNull(),
-    createAt: timestamp("created_at").defaultNow().notNull(),
-    updateAt: timestamp("updated_at").defaultNow().notNull(),
+  imageUrl: text("image_url").notNull(),
+  publicId: text("public_id").notNull(),
+  isMain: boolean("is_main").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
-//orders table 
-export const order = pgTable("order", {
+
+export const cartItem = pgTable(
+  "cart_item",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    productId: text("product_id")
+      .notNull()
+      .references(() => product.id, { onDelete: "cascade" }),
+    quantity: integer("quantity").notNull().default(1),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("cart_item_user_product_idx").on(table.userId, table.productId),
+  ],
+);
+
+// address model
+export const address = pgTable("address", {
+  id: text("id").primaryKey(),
+
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, {
+      onDelete: "cascade",
+    }),
+
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  phone: text("phone").notNull(),
+  street: text("street").notNull(),
+  city: text("city").notNull(),
+  state: text("state").notNull(),
+  postalCode: text("postal_code").notNull().default(""),
+  country: text("country").notNull(),
+  isDefault: boolean("is_default").default(false).notNull(),
+  createAt: timestamp("created_at").defaultNow().notNull(),
+  updateAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// orders table
+export const order = pgTable(
+  "order",
+  {
     id: text("id").primaryKey(),
     orderId: text("order_id").notNull().unique(),
-    userId: text("user_id").notNull().references(() => user.id, {onDelete: "cascade"}),
-    addressId: text("address_id").notNull().references(() => address.id, {onDelete: "cascade"}),
-    totalAmount: decimal("total_amount", {precision: 10, scale:2}).notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    addressId: text("address_id")
+      .notNull()
+      .references(() => address.id, { onDelete: "cascade" }),
+    subtotal: decimal("subtotal", { precision: 10, scale: 2 })
+      .notNull()
+      .default("0"),
+    shippingFee: decimal("shipping_fee", { precision: 10, scale: 2 })
+      .notNull()
+      .default("0"),
+    tax: decimal("tax", { precision: 10, scale: 2 }).notNull().default("0"),
+    totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
     paymentMethod: text("payment_method").notNull(),
     paymentStatus: text("payment_status").notNull().default("pending"),
     orderStatus: text("order_status").notNull().default("pending"),
@@ -60,59 +106,80 @@ export const order = pgTable("order", {
     stripeCheckoutSessionId: text("stripe_checkout_session_id"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+  },
+  (table) => [index("order_user_idx").on(table.userId)],
+);
 
-//orderitems table
+// orderitems table
 export const orderItem = pgTable("order_item", {
-    id: text("id").primaryKey(),
-    orderId: text("order_id").notNull().references(() => order.id, {onDelete: "cascade"}),
-    productId: text("product_id").notNull().references(() => product.id),
-    quantity: integer("quantity").notNull(),
-    price: decimal("price", {precision: 10, scale: 2,}).notNull(),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
+  id: text("id").primaryKey(),
+  orderId: text("order_id")
+    .notNull()
+    .references(() => order.id, { onDelete: "cascade" }),
+  productId: text("product_id").references(() => product.id, {
+    onDelete: "set null",
+  }),
+  productName: text("product_name").notNull().default(""),
+  productImage: text("product_image"),
+  unit: text("unit"),
+  quantity: integer("quantity").notNull(),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-//relationships
+// relationships
 
-export const productRelations = relations(product, ({many}) => ({
-    images:many(productImage),
-    orderItems:many(orderItem)
+export const productRelations = relations(product, ({ many }) => ({
+  images: many(productImage),
+  orderItems: many(orderItem),
+  cartItems: many(cartItem),
 }));
 
-export const productImageRelations = relations(productImage, ({one}) => ({
-    product:one(product,{
-        fields: [productImage.productId],
-        references: [product.id]
-    })
+export const productImageRelations = relations(productImage, ({ one }) => ({
+  product: one(product, {
+    fields: [productImage.productId],
+    references: [product.id],
+  }),
 }));
 
-export const addressRelations = relations(address, ({one, many}) => ({
-    user: one(user,{
-        fields:[address.userId],
-        references: [user.id]
-    }),
-    orders: many(order),
-}));
-export const orderRelations = relations(order, ({one, many}) => ({
-    user: one(user, {
-        fields: [order.userId],
-        references: [user.id],
-    }),
-    address: one(address, {
-        fields: [order.addressId],
-        references: [address.id]
-    }),
-    items: many(orderItem),
+export const cartItemRelations = relations(cartItem, ({ one }) => ({
+  user: one(user, {
+    fields: [cartItem.userId],
+    references: [user.id],
+  }),
+  product: one(product, {
+    fields: [cartItem.productId],
+    references: [product.id],
+  }),
 }));
 
+export const addressRelations = relations(address, ({ one, many }) => ({
+  user: one(user, {
+    fields: [address.userId],
+    references: [user.id],
+  }),
+  orders: many(order),
+}));
 
-export const orderItemRelations = relations(orderItem, ({one}) => ({
-    order: one(order, {
-        fields: [orderItem.orderId],
-        references: [order.id],
-    }),
-    product: one(product, {
-        fields: [orderItem.productId],
-        references:[product.id],
-    })
-}))
+export const orderRelations = relations(order, ({ one, many }) => ({
+  user: one(user, {
+    fields: [order.userId],
+    references: [user.id],
+  }),
+  address: one(address, {
+    fields: [order.addressId],
+    references: [address.id],
+  }),
+  items: many(orderItem),
+}));
+
+export const orderItemRelations = relations(orderItem, ({ one }) => ({
+  order: one(order, {
+    fields: [orderItem.orderId],
+    references: [order.id],
+  }),
+  product: one(product, {
+    fields: [orderItem.productId],
+    references: [product.id],
+  }),
+}));

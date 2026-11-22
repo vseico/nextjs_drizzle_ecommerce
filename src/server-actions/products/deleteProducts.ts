@@ -4,8 +4,10 @@ import { db } from "@/db/db";
 import { product, productImage } from "@/db/schema";
 import cloudinary from "@/lib/cloudinary";
 import { eq } from "drizzle-orm";
+import { requireAdmin } from "../auth/requireAdmin";
 
 export async function deleteProduct(productId:string){
+    await requireAdmin();
     try {
         const images = await db.select({
             publicId:productImage.publicId

@@ -70,6 +70,7 @@ export async function getShopProducts({
         oldPrice: product.oldPrice,
         unit: product.unit,
         slug: product.slug,
+        stock: product.stock,
         image: product.images.find((image) => image.isMain)?.imageUrl ?? null,
     }));
 

@@ -1,8 +1,6 @@
-import { products } from "@/components/constants/products";
 import FrontedLayouts from "@/components/layouts/FrontedLayouts";
 import ProductCardSkeleton from "@/components/loading/skeletons/ProductCardSkeleton";
 import FilterOptions from "@/components/product/FilterOptions";
-import ProductCard from "@/components/product/ProductCard";
 import ShopProducts from "@/components/product/ShopProducts";
 import SortOptions from "@/components/product/SortOptions";
 import { Suspense } from "react";

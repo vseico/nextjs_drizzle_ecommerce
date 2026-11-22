@@ -1,4 +1,3 @@
-import { success } from "better-auth";
 import { requireAdmin } from "../auth/requireAdmin";
 import { db } from "@/db/db";
 import { product } from "@/db/schema";

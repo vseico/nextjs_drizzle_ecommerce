@@ -1,53 +1,61 @@
 import Image from "next/image";
 import Link from "next/link";
-import { IoCartOutline } from "react-icons/io5";
+import AddToCartButton from "./AddToCartButton";
 
-interface ProductCardType{
-    id: string;
-    name: string;
-    category: string;
-    price: string;
-    oldPrice: string | null;
-    unit: string;
-    slug: string;
-    image: string | null;
-
+interface ProductCardType {
+  id: string;
+  name: string;
+  category: string;
+  price: string;
+  oldPrice: string | null;
+  unit: string;
+  slug: string;
+  image: string | null;
+  stock?: number;
 }
-interface ProductCardProps{
-    product:ProductCardType
+interface ProductCardProps {
+  product: ProductCardType;
 }
 
-const ProductCard = ({product}:ProductCardProps) => {
+const ProductCard = ({ product }: ProductCardProps) => {
+  const outOfStock = product.stock !== undefined && product.stock <= 0;
   return (
-    <div className="border border-gray-500/20 rounded-md md:px-4 px-3 py--2 bg-white w-full">
+    <div className="group w-full rounded-md border border-gray-500/20 bg-white px-3 py-2 md:px-4">
+      <Link href={`/products/${product.slug}`} className="flex justify-center">
+        {product.image ? (
+          <Image
+            className="h-40 w-40 object-contain transition group-hover:scale-105"
+            src={product.image}
+            alt={product.name}
+            width={400}
+            height={400}
+          />
+        ) : (
+          <div className="h-40 w-40 rounded bg-background" />
+        )}
+      </Link>
+      <div className="text-sm text-gray-500/60">
+        <p>{product.category}</p>
         <Link href={`/products/${product.slug}`}>
-            <Image className="group-hover:scale-105 transition w-40 h-40 object-contain" src={product.image || ""} alt={product.name} width={400} height={400}>
-
-            </Image>
-
+          <p className="w-full truncate text-lg font-medium text-gray-700">
+            {product.name}
+          </p>
         </Link>
-        <div className="text-gray-500/60 text-sm">
-            <p>{product.category}</p>
-            <p className="text-gray-700 font-medium text-lg truncate w-full">
-                {product.name}
-            </p>
-            <div className="flex items-end justify-between mt-3">
-                <p className="md:text-xl text-base font-medium text-primary">
-                    {product.price} {" "} <span className="text-gray-500/60 md:text-sm text-xs line-through">{product.oldPrice}</span>
-                </p>
-                <div className="text-primary">
-                    <button className="flex items-center justify-center gap-1 bg-[#E8F7EF] border border-primary-hover md:w-[80px] w-[64px] h-[34px] rounded text-primary font-medium">
-                        <IoCartOutline size={16} className="text-primary" />
-                        Add
-                    </button>
-
-                </div>
-
-            </div>
-
+        <p className="text-xs">{product.unit}</p>
+        <div className="mt-3 flex items-end justify-between">
+          <p className="text-base font-medium text-primary md:text-xl">
+            ${Number(product.price).toFixed(2)}{" "}
+            {product.oldPrice && (
+              <span className="text-xs text-gray-500/60 line-through md:text-sm">
+                ${Number(product.oldPrice).toFixed(2)}
+              </span>
+            )}
+          </p>
+          <AddToCartButton productId={product.id} disabled={outOfStock} />
         </div>
+      </div>
     </div>
-  )
-}
+  );
+};
 
-export default ProductCard
+export default ProductCard;

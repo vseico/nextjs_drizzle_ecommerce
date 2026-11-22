@@ -1,25 +1,34 @@
 "use client";
 import { useState } from "react";
+import toast from "react-hot-toast";
 import { IoClose } from "react-icons/io5";
+import { createAddress } from "@/server-actions/address/address";
+import type { CheckoutAddress } from "./CheckoutPageComponent";
 
 interface AddAddressModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSaved?: (address: CheckoutAddress) => void;
 }
+
+const emptyForm = {
+  firstName: "",
+  lastName: "",
+  phone: "",
+  street: "",
+  city: "",
+  state: "",
+  postalCode: "",
+  country: "",
+};
+
 export default function AddressModal({
   isOpen,
   onClose,
+  onSaved,
 }: AddAddressModalProps) {
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    phone: "",
-    address: "",
-    city: "",
-    state: "",
-    postalCode: "",
-    country: "",
-  });
+  const [formData, setFormData] = useState(emptyForm);
+  const [saving, setSaving] = useState(false);
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -27,10 +36,18 @@ export default function AddressModal({
       [name]: value,
     }));
   };
-  const handleSubmit = (e: React.SubmitEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
-    console.log(formData);
-
+    setSaving(true);
+    const result = await createAddress(formData);
+    setSaving(false);
+    if (!result.success) {
+      toast.error(result.message);
+      return;
+    }
+    toast.success("Address saved");
+    onSaved?.(result.address);
+    setFormData(emptyForm);
     onClose();
   };
   if (!isOpen) return null;
@@ -115,20 +132,20 @@ export default function AddressModal({
           </div>
           <div>
             <label
-              htmlFor="address"
-              className="mb-2 block text-sm font-medium tex-text"
+              htmlFor="street"
+              className="mb-2 block text-sm font-medium text-text"
             >
               Street Address
             </label>
             <input
               type="text"
-              id="address"
-              name="address"
-              value={formData.address}
+              id="street"
+              name="street"
+              value={formData.street}
               onChange={handleChange}
               placeholder="123 Main Street"
               required
-              className="w-full rounded-lg border border-border bg-white px-4 py-3 text-sm text-text outline-none transition "
+              className="w-full rounded-lg border border-border bg-white px-4 py-3 text-sm text-text outline-none transition placeholder:text-muted focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
           </div>
 
@@ -191,8 +208,8 @@ export default function AddressModal({
           {/* Buttons  */}
           <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
             <button type="button" onClick={onClose} className="w-full cursor-pointer rounded-lg border border-border px-5 py-3 text-sm font-medium text-text transition hover:bg-background sm:w-auto">Cancel</button>
-            <button type="submit" className="w-full cursor-pointer rounded-lg bg-primary px-6 py-3 text-sm font-medium text-white transition hover:bg-primary-hover sm:w-auto">
-                Save Address
+            <button type="submit" disabled={saving} className="w-full cursor-pointer rounded-lg bg-primary px-6 py-3 text-sm font-medium text-white transition hover:bg-primary-hover disabled:opacity-60 sm:w-auto">
+                {saving ? "Saving..." : "Save Address"}
             </button>
           </div>
         </form>

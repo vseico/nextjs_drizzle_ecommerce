@@ -2,7 +2,9 @@
 import { useAuthModal } from "@/store/authModalStore";
 import { useState } from "react";
 import Modal from "./Modal";
-import { FiLock, FiMail, FiUser } from "react-icons/fi";
+import { FiMail, FiUser } from "react-icons/fi";
+import PasswordInput from "./PasswordInput";
+import GoogleButton from "./GoogleButton";
 import toast from "react-hot-toast";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
@@ -67,6 +69,7 @@ export default function RegisterModal() {
             Join GroceryCart and start shopping today
           </p>
         </div>
+        <GoogleButton label="Sign up with Google" />
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Name  */}
           <div>
@@ -126,11 +129,13 @@ export default function RegisterModal() {
             >
               Password
             </label>
-            <div className="relative">
-            <FiLock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
-            <input type="password" id="register-email" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Create a password" required minLength={6} className="border w-full rounded-lg bg-white border-border py-3 pl-10 pr-4 text-sm text-text outline-none transition placeholder:text-muted focus:border-primary focus:ring-2 focus:ring-primary/20"/>
-
-            </div>
+            <PasswordInput
+              id="register-password"
+              value={password}
+              onChange={setPassword}
+              placeholder="Create a password (min. 6 characters)"
+              autoComplete="new-password"
+            />
           </div>
 
           {/* Register button  */}

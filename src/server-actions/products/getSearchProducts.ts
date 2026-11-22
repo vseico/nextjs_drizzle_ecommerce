@@ -32,6 +32,7 @@ export async function getSearchProducts(search: string){
             oldPrice: product.oldPrice,
             unit: product.unit,
             slug: product.slug,
+            stock: product.stock,
             image: product.images.find((image) => image.isMain)?.imageUrl ?? null,
         }))
 

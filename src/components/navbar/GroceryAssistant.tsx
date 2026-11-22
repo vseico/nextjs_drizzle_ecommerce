@@ -1,8 +1,6 @@
 "use client"
-import Image from "next/image";
-import Link from "next/link";
 import { useState } from "react";
-import { FiMinus, FiPlus, FiTrash2, FiX } from "react-icons/fi";
+import { FiX } from "react-icons/fi";
 import { LuSparkles } from "react-icons/lu";
 import GroceryAssistantInput from "./GroceryAssistantInput";
 

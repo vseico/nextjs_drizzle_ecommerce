@@ -1,5 +1,4 @@
 import { getNewArrivals } from "@/server-actions/products/getNewArrivals";
-import { products } from "../constants/products";
 import ProductCard from "../product/ProductCard";
 import { Suspense } from "react";
 import ProductCardSkeleton from "../loading/skeletons/ProductCardSkeleton";
